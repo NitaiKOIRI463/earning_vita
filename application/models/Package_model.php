@@ -56,6 +56,18 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
             }
       }
 
+      public function getbitcoinaddress_m()
+      {
+            $result = $this->db->select('value')->from('tbl_setup p')->where(['key'=>'bitcoin_address','status'=>1])->get()->result_array();
+            return $result[0]['value'];
+      }
+      
+      public function getPandingPackage_m($member_id)
+      {
+            return $this->db->select('id,current_status,c_date')->from('tbl_users_package_details')->where(['member_id'=>$member_id,'status'=>1,'current_status'=>'pending'])->get()->result_array();
+            
+      }
+
 
 
    }

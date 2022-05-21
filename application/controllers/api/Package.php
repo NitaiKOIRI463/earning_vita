@@ -77,6 +77,27 @@ class Package extends REST_Controller
         }      
    }
 
+   public function get_bitcoin_address_post()
+   {
+     $result = $this->Package_model->getbitcoinaddress_m();
+     $this->response(['status'=>true,'data'=>$result,'msg'=>'Successfully Requested !','response_code'=>REST_Controller::HTTP_OK]); 
+   }
+
+   public function get_pending_packages_post()
+   {
+        if($this->input->post('member_id',true)=='')
+        {
+            $this->response(['status'=>false,'data'=>[],'msg'=>'member_id required !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+        }else
+        {
+            $result = $this->Package_model->getPandingPackage_m($this->input->post('member_id',true));
+            $this->response(['status'=>true,'data'=>$result,'msg'=>'Successfully Requested !','response_code'=>REST_Controller::HTTP_OK]); 
+        }
+     
+   }
+
+   
+
 
     
 
