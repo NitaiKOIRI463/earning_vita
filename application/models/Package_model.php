@@ -87,9 +87,45 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
                 $this->db->where('member_id',$member_id);
         if($current_status!="")
                 $this->db->where('current_status',$current_status);
-            return $this->db->select('id,package_id,package_amount,total_return,days,sponsor_income_perc,matching_perc,capping,activation_date,expiry_date,activated_by,current_status,c_date,required_btc,payment_type')->from('tbl_users_package_details')->where(['member_id'=>$member_id,'status'=>1,'current_status!='=>'expired'])->get()->result_array();
+        $base_url = base_url().'all-uploaded-img/screenshot/';
+            return $this->db->select("member_id,required_btc,id,package_id,package_amount,total_return,days,sponsor_income_perc,matching_perc,capping,activation_date,expiry_date,activated_by,current_status,c_date,required_btc,payment_type,transaction_no,CONCAT('$base_url',screenshot) as screenshot")->from('tbl_users_package_details')->where(['status'=>1,'current_status!='=>'expired'])->get()->result_array();
             
       }
+
+      public function getRequestPackageDetails_m($req_id)
+      {
+        if($req_id!="")
+                $this->db->where('p.id',$req_id);
+        return $this->db->select("p.member_id,p.package_id,p.package_amount,r.sponsor_id,p.current_status")
+            ->from('tbl_users_package_details p')
+            ->join('tbl_registration_master r','r.member_id=p.member_id','left')
+            ->where(['p.status'=>1,'p.current_status'=>'requested'])->get()->result_array();
+            
+      }
+
+      public function getLetestPackageDetails_m($member_id)
+      {
+        if($member_id!="")
+                $this->db->where('p.member_id',$member_id);
+        return $this->db->select("p.member_id,p.package_id,p.sponsor_income_perc,p.matching_perc,roi_amount,days,total_return,n.name")
+            ->from('tbl_users_package_details p')
+            ->join('tbl_registration_master n','n.member_id=p.member_id','left')
+            ->where(['p.status'=>1,'p.current_status'=>'activate'])->order_by('p.activation_date','desc')->limit(1)->get()->result_array();
+            
+      }
+
+      public function getsevenLevelparentId($member_id)
+        {
+            $data = $this->db->select('parent_id,name,member_id')->from('tbl_registration_master')->where(['member_id'=>$member_id,'role_type'=>2])->limit(1)->order_by('id','desc')->get()->result_array();
+            // echo $this->db->last_query();die;
+            if(!empty($data))
+            {
+                return $data[0];
+            }else
+            {
+                return 200;
+            }
+        }
 
 
    }

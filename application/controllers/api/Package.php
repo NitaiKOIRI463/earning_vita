@@ -6,8 +6,14 @@ class Package extends REST_Controller
 {
    public function __construct()
    {
-       parent::__construct();
-     $this->load->model('Package_model');
+         parent::__construct();
+         $this->load->model('Package_model');
+         $this->load->model('GenerateFund_model');
+         $this->load->model('Package_model');
+         $this->load->model('Member_model');
+         
+         
+     
    }
 
    public function BuyPackage_post()
@@ -182,10 +188,111 @@ class Package extends REST_Controller
    {
         $member_id = $this->input->post('member_id',true)!=''?$this->input->post('member_id',true):"";
         $current_status = $this->input->post('current_status',true)!=''?$this->input->post('current_status',true):"";
-        $result = $this->Package_model->getMyPackage_m($this->input->post('member_id',true));
+
+        $result = $this->Package_model->getRequestPackage_m($member_id,$current_status);
         $this->response(['status'=>true,'data'=>$result,'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]); 
      
    }
+
+   public function activate_requested_packages_post()
+   {
+        if($this->input->post('user_request_id',true)=='')
+        {
+            $this->response(['status'=>false,'data'=>[],'msg'=>'user_request_id required !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+        }elseif($this->input->post('d_by',true)=='')
+        {
+            $this->response(['status'=>false,'data'=>[],'msg'=>'d_by required !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+        }else
+        {
+            $result = $this->Package_model->getRequestPackageDetails_m($this->input->post('user_request_id',true));
+            if(empty($result))
+            {
+                $this->response(['status'=>false,'data'=>[],'msg'=>'invalid package !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+            }else
+            {
+                $ActivationMainData = [];
+                $ActivationMainData['sponser_details'] = [];
+                $ActivationMainData['matching_details'] = [];
+                if($result[0]['current_status']=='requested')
+                {
+
+                    $resultData = $this->GenerateFund_model->getAvailableFunds_m();
+                    if($result[0]['package_amount']<=$resultData[0]['total_fund'])
+                    {
+
+                       $sponser_idExist =  $this->Member_model->verifyRegisterMemberExist($result[0]['sponsor_id']);
+                       if($sponser_idExist>0)
+                       {
+
+                            $letestPackageDetails = $this->Package_model->getLetestPackageDetails_m($result[0]['sponsor_id']);
+                            if(!empty($letestPackageDetails))
+                            {
+                                //Sponser Income Area
+                                $ActivationMainData['sponser_details'] = $letestPackageDetails;
+
+                            }
+
+                            $ActivationMainData['matching_details'] = $this->get_levels_of_parents($result[0]['member_id'],7);
+
+                            $this->response(['status'=>true,'data'=>$ActivationMainData,'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]); 
+                            
+                       }else
+                       {
+                            $this->response(['status'=>false,'data'=>[],'msg'=>'invalid sponser_id !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+                       }
+
+                    }else
+                    {
+                        $this->response(['status'=>false,'data'=>[],'msg'=>'Insufficent Fund !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+                    }
+
+                }else
+                {
+                    $this->response(['status'=>false,'data'=>[],'msg'=>'invalid request !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+                }
+                $this->response(['status'=>true,'data'=>$result,'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]); 
+            }
+            
+        }
+     
+   }
+
+
+   public function get_levels_of_parents($member_id,$level)
+    {
+        $tmp_member_id = $member_id;
+        $members = [];
+        $i = 0; 
+        $lvl = 1;
+        while($i<=$level)
+        {
+            $result = $this->Package_model->getsevenLevelparentId($tmp_member_id);
+            // print_r($result);die;
+            if($result==200)
+            {
+                $tmp_member_id = $member_id;
+                break;
+            }else
+            {
+                $tmp_member_id = $result['parent_id'];
+                $smallArray = [];
+                if($tmp_member_id!="NULL" && $result['member_id']!=$member_id)
+                {
+                  $package_d = $this->Package_model->getLetestPackageDetails_m($tmp_member_id);
+                  $smallArray = ['member_id'=>$result['member_id'],'level'=>$lvl,'name'=>$result['name'],'package'=>$package_d];
+                  array_push($members,$smallArray);
+                  $lvl++;  
+                }elseif($tmp_member_id=="NULL" && $result['member_id']!=$member_id){
+                    $package_d = $this->Package_model->getLetestPackageDetails_m($result['member_id']);
+                    $smallArray = ['member_id'=>$result['member_id'],'level'=>$lvl,'name'=>$result['name'],'package'=>$package_d];
+                  array_push($members,$smallArray);
+                  $lvl++;  
+                }
+            }
+            $i++;
+        }
+        return $members;
+    }
    
 
 

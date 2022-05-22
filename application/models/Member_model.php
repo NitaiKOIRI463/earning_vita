@@ -79,7 +79,7 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
         public function getNewId()
         {
             $lastid="";
-            $this->db->select('member_id')->from('tbl_registration_master')->order_by('id','desc');
+            $this->db->select('member_id')->from('tbl_registration_master')->where('role_type',2)->order_by('id','desc');
              $qry = $this->db->get()->result_array();
             if($qry[0]["member_id"]!="")
             {
