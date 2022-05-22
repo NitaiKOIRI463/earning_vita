@@ -69,6 +69,11 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
       }
 
 
+      public function update_package_purchase_m($data,$where)
+      {
+        return $this->db->update('tbl_users_package_details',$data,$where);
+      }
+
 
    }
 ?>

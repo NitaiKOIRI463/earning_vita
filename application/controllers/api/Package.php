@@ -96,6 +96,27 @@ class Package extends REST_Controller
      
    }
 
+
+   public function expiry_package_request_post()
+   {
+        if($this->input->post('member_id',true)=='')
+        {
+            $this->response(['status'=>false,'data'=>[],'msg'=>'member_id required !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+        }if($this->input->post('id',true)=='')
+        {
+            $this->response(['status'=>false,'data'=>[],'msg'=>'request_id required !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+        }else
+        {
+            $mainData = [];
+            $mainData['current_status'] = 'expired';
+            $mainData['d_by'] = $this->input->post('member_id');
+            $mainData['d_date'] = date('Y-m-d H:i:s');
+            $result = $this->Package_model->update_package_purchase_m($mainData,['id'=>$this->input->post('id',true),'member_id'=>$this->input->post('member_id',true),'status'=>1]);
+            $this->response(['status'=>true,'data'=>$result,'msg'=>'Successfully Requested !','response_code'=>REST_Controller::HTTP_OK]); 
+        }
+     
+   }
+
    
 
 
