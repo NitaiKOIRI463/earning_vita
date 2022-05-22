@@ -81,7 +81,7 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
             
       }
 
-      public function getMyPackage_m($member_id,$current_status)
+      public function getRequestPackage_m($member_id,$current_status)
       {
         if($member_id!="")
                 $this->db->where('member_id',$member_id);
