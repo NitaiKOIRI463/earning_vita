@@ -25,7 +25,7 @@ class Login extends REST_Controller
             {
 
                 $userData = $this->Login_model->getUserIdDetails($this->input->post('member_id',true));
-                if($userData['password'] == md5($this->input->post('password',true)))
+                if($userData['password'] == $this->input->post('password',true))
                 {
 
                     if($userData['block_status']==1)
@@ -77,7 +77,7 @@ class Login extends REST_Controller
             {
 
                 $userData = $this->Login_model->getUserIdDetails($this->input->post('user_id',true));
-                if($userData['password'] == md5($this->input->post('password',true)))
+                if($userData['password'] == $this->input->post('password',true))
                 {
 
                     if($userData['block_status']==1)
