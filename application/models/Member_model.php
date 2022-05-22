@@ -143,7 +143,7 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
                     $this->db->where('member_id',$member_id);
             $offset = $page*$limit - $limit; 
             
-            return $this->db->select("member_id,parent_id,side,sponsor_id,title,name,gender,f_h_name,country,state,city,address,pin,mobile_no,email_id,kyc_status,registration_date,CONCAT('$base_url',photo) as photo,role_type,block_status")
+            return $this->db->select("member_id,parent_id,side,sponsor_id,title,name,gender,f_h_name,country,state,city,address,pin,mobile_no,email_id,kyc_status,registration_date,CONCAT('$base_url',photo) as photo,role_type,block_status,transaction_pin,password")
                 ->from('tbl_registration_master')
                 ->where(['status'=>1])
                 ->limit($limit,$offset)->get()->result_array();

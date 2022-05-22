@@ -87,7 +87,7 @@ class Member extends REST_Controller
                   $dataArray['mobile_no'] = $this->input->post('mobile_no',true);
                   $dataArray['gender'] = $this->input->post('gender',true);
                   $dataArray['sponsor_id'] = $this->input->post('sponsor_id',true);
-                  $dataArray['password'] = md5($pass);
+                  $dataArray['password'] = $pass;
                   $dataArray['side'] = $this->input->post('side',true);
                   $dataArray['country_code'] = $this->input->post('country_code',true);
                   $dataArray['title'] = $this->input->post('title',true);
@@ -186,6 +186,14 @@ class Member extends REST_Controller
       {
         $this->response(['status'=>false,'data'=>[],'msg'=>'d_by required !',
             'response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+      }elseif($this->input->post('transaction_pin',true)=='')
+      {
+        $this->response(['status'=>false,'data'=>[],'msg'=>'transaction_pin required !',
+            'response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+      }elseif($this->input->post('password',true)=='')
+      {
+        $this->response(['status'=>false,'data'=>[],'msg'=>'password required !',
+            'response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
       }
       else{
 
@@ -219,6 +227,8 @@ class Member extends REST_Controller
                   $dataArray['country'] = $this->input->post('country',true);
                   $dataArray['state'] = $this->input->post('state',true);
                   $dataArray['city'] = $this->input->post('city',true);
+                  $dataArray['transaction_pin'] = $this->input->post('transaction_pin',true);
+                  $dataArray['password'] = $this->input->post('password',true);
                   $dataArray['address'] = $this->input->post('address',true);
                   $dataArray['pin'] = $this->input->post('pin',true);
                   $dataArray['d_by'] = $this->input->post('d_by',true);
