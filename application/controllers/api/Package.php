@@ -176,6 +176,16 @@ class Package extends REST_Controller
         }
      
    }
+
+
+   public function get_requested_packages_post()
+   {
+        $member_id = $this->input->post('member_id',true)!=''?$this->input->post('member_id',true):"";
+        $current_status = $this->input->post('current_status',true)!=''?$this->input->post('current_status',true):"";
+        $result = $this->Package_model->getMyPackage_m($this->input->post('member_id',true));
+        $this->response(['status'=>true,'data'=>$result,'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]); 
+     
+   }
    
 
 

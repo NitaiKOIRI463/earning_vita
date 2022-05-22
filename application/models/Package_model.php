@@ -77,6 +77,16 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
 
       public function getMyPackage_m($member_id)
       {
+            return $this->db->select('id,package_id,package_amount,total_return,days,sponsor_income_perc,matching_perc,capping,activation_date,expiry_date,activated_by,current_status,c_date,required_btc,payment_type,remaining_amount,release_amount')->from('tbl_users_package_details')->where(['member_id'=>$member_id,'status'=>1,'current_status!='=>'expired'])->get()->result_array();
+            
+      }
+
+      public function getMyPackage_m($member_id,$current_status)
+      {
+        if($member_id!="")
+                $this->db->where('member_id',$member_id);
+        if($current_status!="")
+                $this->db->where('current_status',$current_status);
             return $this->db->select('id,package_id,package_amount,total_return,days,sponsor_income_perc,matching_perc,capping,activation_date,expiry_date,activated_by,current_status,c_date,required_btc,payment_type')->from('tbl_users_package_details')->where(['member_id'=>$member_id,'status'=>1,'current_status!='=>'expired'])->get()->result_array();
             
       }
