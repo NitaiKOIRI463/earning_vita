@@ -39,6 +39,10 @@ class Member extends REST_Controller
       {
         $this->response(['status'=>false,'data'=>[],'msg'=>'side required !',
             'response_code'=>REST_Controller::HTTP_BAD_REQUEST]); 
+      }elseif($this->input->post('country_code',true)=='')
+      {
+        $this->response(['status'=>false,'data'=>[],'msg'=>'country_code required !',
+            'response_code'=>REST_Controller::HTTP_BAD_REQUEST]); 
       }elseif($this->input->post('country',true)=='')
       {
         $this->response(['status'=>false,'data'=>[],'msg'=>'country required !',
@@ -74,19 +78,6 @@ class Member extends REST_Controller
 
                 {
                   $dataArray=[];
-                  if (isset($_POST['photo']) && !empty($_POST['photo'])) 
-                  {
-                           $photo_incoded = $this->input->post('photo',true);
-                           // $inside_image = str_replace(' ', '+', $inside_image_incoded);
-                           $imageData = base64_decode($photo_incoded);
-                           $photo = uniqid() . '.jpg';
-
-                     $photo_file = '../all-uploaded-img/img/' . $photo;
-                     $success = file_put_contents(APPPATH . $photo_file, $imageData);
-                     $dataArray['photo'] = $photo;
-                  }
-
-
                   $pass = mt_rand(111111,999999);
                   $dataArray['member_id']=$this->Member_model->getNewId();
                   $dataArray['parent_id'] = $this->get_parent_id($this->input->post('sponsor_id',true),$this->input->post('side',true));
@@ -98,6 +89,7 @@ class Member extends REST_Controller
                   $dataArray['sponsor_id'] = $this->input->post('sponsor_id',true);
                   $dataArray['password'] = md5($pass);
                   $dataArray['side'] = $this->input->post('side',true);
+                  $dataArray['country_code'] = $this->input->post('country_code',true);
                   $dataArray['title'] = $this->input->post('title',true);
                   $dataArray['country'] = $this->input->post('country',true);
                   $dataArray['state'] = $this->input->post('state',true);
@@ -162,6 +154,10 @@ class Member extends REST_Controller
       {
         $this->response(['status'=>false,'data'=>[],'msg'=>'gender required !',
             'response_code'=>REST_Controller::HTTP_BAD_REQUEST]); 
+      }elseif($this->input->post('country_code',true)=='')
+      {
+        $this->response(['status'=>false,'data'=>[],'msg'=>'country_code required !',
+            'response_code'=>REST_Controller::HTTP_BAD_REQUEST]); 
       }elseif($this->input->post('country',true)=='')
       {
         $this->response(['status'=>false,'data'=>[],'msg'=>'country required !',
@@ -201,11 +197,25 @@ class Member extends REST_Controller
                }else
                {
                   $dataArray=[];
+
+                  if (isset($_POST['photo']) && !empty($_POST['photo'])) 
+                  {
+                           $photo_incoded = $this->input->post('photo',true);
+                           // $inside_image = str_replace(' ', '+', $inside_image_incoded);
+                           $imageData = base64_decode($photo_incoded);
+                           $photo = uniqid() . '.jpg';
+
+                     $photo_file = '../all-uploaded-img/img/' . $photo;
+                     $success = file_put_contents(APPPATH . $photo_file, $imageData);
+                     $dataArray['photo'] = $photo;
+                  }
+
                   $dataArray['name'] = $this->input->post('name',true);
                   $dataArray['f_h_name'] = $this->input->post('f_h_name',true);
                   $dataArray['mobile_no'] = $this->input->post('mobile_no',true);
                   $dataArray['gender'] = $this->input->post('gender',true);
                   $dataArray['title'] = $this->input->post('title',true);
+                  $dataArray['country_code'] = $this->input->post('country_code',true);
                   $dataArray['country'] = $this->input->post('country',true);
                   $dataArray['state'] = $this->input->post('state',true);
                   $dataArray['city'] = $this->input->post('city',true);
