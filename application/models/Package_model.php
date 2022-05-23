@@ -116,7 +116,7 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
 
       public function getsevenLevelparentId($member_id)
         {
-            $data = $this->db->select('parent_id,name,member_id')->from('tbl_registration_master')->where(['member_id'=>$member_id,'role_type'=>2])->limit(1)->order_by('id','desc')->get()->result_array();
+            $data = $this->db->select('parent_id,name,member_id,side')->from('tbl_registration_master')->where(['member_id'=>$member_id,'role_type'=>2])->limit(1)->order_by('id','desc')->get()->result_array();
             // echo $this->db->last_query();die;
             if(!empty($data))
             {
@@ -126,6 +126,46 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
                 return 200;
             }
         }
+
+        public function userSideBussiness_m($member_id,$side)
+          {
+                $result = $this->db->select('fund as total')->from('tbl_users_business p')->where(['p.member_id'=>$member_id,'p.status'=>1,'p.side'=>$side])->get()->result_array();
+                if(!empty($result))
+                {
+                    return $result[0]['total'];
+                }else
+                {
+                    return 0;
+                }
+          }
+
+      public function verify_member_side_business_m($member_id,$side)
+      {
+            $result = $this->db->select('count(p.id) as total')->from('tbl_users_business p')->where(['p.member_id'=>$member_id,'p.status'=>1,'p.side'=>$side])->get()->result_array();
+            if(!empty($result))
+            {
+                return $result[0]['total'];
+            }else
+            {
+                return 0;
+            }
+      }
+
+    public function insert_member_business_m($data)
+      {
+        return $this->db->insert('tbl_users_business',$data);
+      }
+
+
+    public function getChildGenology_m($parent_id)
+      {
+            return $this->db->select("r.name,r.member_id,l.m_level,l.side,r.parent_id,r.side as p_side")->from('tbl_parent_level l')
+            ->join('tbl_registration_master r','r.member_id=l.member_id','left')
+            ->where(['l.status'=>1,'l.parent_id'=>$parent_id])->order_by('l.m_level','asc')->get()->result_array();
+            
+      }
+
+
 
 
    }

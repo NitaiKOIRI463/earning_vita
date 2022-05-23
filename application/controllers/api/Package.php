@@ -279,20 +279,30 @@ class Package extends REST_Controller
                 if($tmp_member_id!="NULL" && $result['member_id']!=$member_id)
                 {
                   $package_d = $this->Package_model->getLetestPackageDetails_m($tmp_member_id);
-                  $smallArray = ['member_id'=>$result['member_id'],'level'=>$lvl,'name'=>$result['name'],'package'=>$package_d];
+                  $smallArray = ['member_id'=>$result['member_id'],'level'=>$lvl,'name'=>$result['name'],'side'=>$result['side'],'package'=>$package_d];
                   array_push($members,$smallArray);
                   $lvl++;  
                 }elseif($tmp_member_id=="NULL" && $result['member_id']!=$member_id){
                     $package_d = $this->Package_model->getLetestPackageDetails_m($result['member_id']);
-                    $smallArray = ['member_id'=>$result['member_id'],'level'=>$lvl,'name'=>$result['name'],'package'=>$package_d];
+                    $smallArray = ['member_id'=>$result['member_id'],'level'=>$lvl,'name'=>$result['name'],'side'=>$result['side'],'package'=>$package_d];
                   array_push($members,$smallArray);
                   $lvl++;  
                 }
             }
             $i++;
         }
+        
         return $members;
     }
+
+
+   public function get_genology_post()
+   {
+        $parent_id = $this->input->post('parent_id',true)!=''?$this->input->post('parent_id',true):"";
+        $result = $this->Package_model->getChildGenology_m($parent_id);
+        $this->response(['status'=>true,'data'=>$result,'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]); 
+     
+   }
    
 
 
