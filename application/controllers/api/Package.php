@@ -489,7 +489,8 @@ class Package extends REST_Controller
    {
         $parent_id = $this->input->post('parent_id',true)!=''?$this->input->post('parent_id',true):"";
         $result = $this->Package_model->getChildGenology_m($parent_id);
-        $this->response(['status'=>true,'data'=>$result,'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]); 
+        $total_L_R = $this->Package_model->getTotalLeftRight($parent_id);
+        $this->response(['status'=>true,'data'=>['data'=>$result,'count_L_R'=>$total_L_R],'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]); 
      
    }
    

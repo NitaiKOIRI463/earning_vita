@@ -1,5 +1,9 @@
 <?php
-   
+    use PHPMailer\PHPMailer\PHPMailer;
+   use PHPMailer\PHPMailer\Exception;
+   require_once APPPATH . 'third_party/PHPMailer/Exception.php';
+   require_once APPPATH . 'third_party/PHPMailer/PHPMailer.php';
+   require_once APPPATH . 'third_party/PHPMailer/SMTP.php';
 require APPPATH . 'libraries/REST_Controller.php';
      
 class Member extends REST_Controller 
@@ -101,7 +105,39 @@ class Member extends REST_Controller
                   $dataArray['c_date'] = date('Y-m-d H:i:s');
                   $dataArray['status'] = 1;
                   $this->Member_model->addUserData($dataArray);
-                  $this->response(['status'=>true,'data'=>['password'=>$pass],'msg'=>'successfully registered','response_code' => REST_Controller::HTTP_OK]); 
+
+                  if(!empty($dataArray['member_id']))
+                  {
+                    $content = '';
+                    $mail = new PHPMailer();
+                    $mail->IsSMTP();
+                    $mail->Mailer = "smtp";
+                    $mail->SMTPDebug = 0;
+                    $mail->SMTPAuth = true;
+                    $mail->SMTPSecure = "tls";
+                    $mail->Port = 587;
+                    $mail->Host = "smtpout.secureserver.net";
+                    $mail->Username = "info@cryptotrado.com";
+                    $mail->Password = "i@123456!";
+                    $mail->IsHTML(true);
+                    $mail->AddAddress($dataArray['email_id'],$dataArray['name']);
+                    // $mail->AddAddress("kumarsamir812@gmail.com","Samir Singh");
+                    $mail->SetFrom("info@cryptotrado.com", "crypto trado");
+                    $mail->Subject = "REGISTERED SUCCESFULLY !!";
+                    $content  .= '<h5> Dear '.$dataArray['name'].'</h5>';
+                    $content  .= '<h6>You have successfully registerd with us</h6>';
+                    $content  .= '<strong>Your Crendetials</strong>';
+                    $content  .= '<p>Member Id : </p>';
+                    $content  .= '<strong>'.$dataArray['member_id'].'</strong>';
+                    $content  .= '<p>Password : </p>';
+                    $content  .= '<strong>'.$pass.'</strong>';
+                    $content  .= '<p>Thank You</p>';
+                    $mail->MsgHTML($content);
+                    $mail->Send();
+                  }
+
+                  $this->response(['status'=>true,'data'=>['password'=>$pass,'member_id'=>$dataArray['member_id']],'msg'=>'successfully registered','response_code' => REST_Controller::HTTP_OK]);
+
                 }else
                   {
                    $this->response(['status'=>false,'data'=>[],'msg'=>'sponser_id not exist !','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
