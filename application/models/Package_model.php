@@ -96,7 +96,7 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
       {
         if($req_id!="")
                 $this->db->where('p.id',$req_id);
-        return $this->db->select("p.member_id,p.package_id,p.package_amount,r.sponsor_id,p.current_status")
+        return $this->db->select("p.id as reg_id,p.member_id,p.package_id,p.package_amount,r.sponsor_id,p.current_status,p.days,p.roi_perc,p.roi_amount,total_return,r.name")
             ->from('tbl_users_package_details p')
             ->join('tbl_registration_master r','r.member_id=p.member_id','left')
             ->where(['p.status'=>1,'p.current_status'=>'requested'])->get()->result_array();
@@ -110,7 +110,7 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
         return $this->db->select("p.member_id,p.package_id,p.sponsor_income_perc,p.matching_perc,roi_amount,days,total_return,n.name")
             ->from('tbl_users_package_details p')
             ->join('tbl_registration_master n','n.member_id=p.member_id','left')
-            ->where(['p.status'=>1,'p.current_status'=>'activate'])->order_by('p.activation_date','desc')->limit(1)->get()->result_array();
+            ->where(['p.status'=>1,'p.current_status'=>'active'])->order_by('p.activation_date','desc')->limit(1)->get()->result_array();
             
       }
 
@@ -164,6 +164,72 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
             ->where(['l.status'=>1,'l.parent_id'=>$parent_id])->order_by('l.m_level','asc')->get()->result_array();
             
       }
+
+    public function get_member_details_m($member_id)
+      {
+            return $this->db->select('u.name,u.member_id,p.current_status,p.matching_perc,p.package_amount')->from('tbl_users_package_details p')->join('tbl_registration_master u','u.member_id=p.member_id','left')->where(['p.member_id'=>$member_id,'p.status'=>1,'p.current_status' => 'active'])->order_by('p.activation_date','desc')->limit(1)->get()->result_array();
+           
+      }
+    public function get7Levelparents($member_id)
+    {
+        $qry = $this->db->query("SELECT l.parent_id,l.side,l.m_level,r.name FROM tbl_parent_level l left join tbl_registration_master r on r.member_id = l.parent_id where l.member_id = '$member_id' and l.status = 1 and l.m_level <=7 and l.parent_id != 'EARNINGVISTA1000' order by l.m_level asc");
+        return $qry->result_array();
+    }
+
+    
+
+    public function getTwoDirectRefral($parent_id,$side)
+    {
+        $qry = $this->db->query("SELECT p.package_amount,r.sponsor_id,r.member_id FROM tbl_users_package_details p left join tbl_registration_master r on r.member_id = p.member_id where r.sponsor_id = '$parent_id' and p.status = 1 and p.current_status = 'active' and r.side = '$side'");
+        return $qry->result_array();
+    }
+
+    public function getMemberBusiness($parent_id,$side)
+    {
+        $qry = $this->db->query("SELECT IF(sum(Effect_Amount) Is NULL,0,sum(Effect_Amount)) as total FROM `tbl_binary_income` where Member_id = '$parent_id' and Effect_Side = '$side' and laps_status = 1 and status = 1");
+       $result = $qry->result_array();
+       return $result[0]['total'];
+    }
+
+    public function insertBinaryAdminIncome($data)
+    {   
+        return $this->db->insert('tbl_binary_income_admin',$data);
+    }
+    public function insertSponserAdminIncome($data)
+    {   
+        return $this->db->insert('tbl_sponsor_income_admin',$data);
+    }
+
+    public function ActivateUserPackage($data,$where)
+    {   
+        return $this->db->update('tbl_users_package_details',$data,$where);
+    }
+
+    public function updateFund($data,$where)
+    {   
+        return $this->db->update('tbl_main_wallets',$data,$where);
+    }
+
+    public function MainWalletHistory($data)
+    {   
+        return $this->db->insert('tbl_main_wallet_histories',$data);
+    }
+
+    public function getFundAvailable()
+    {
+        $result = $this->db->select('total_fund')->from('tbl_main_wallets')->where(['main_type'=>'main','status'=>1])->get()->result_array();
+        if(empty($result[0]['total_fund']))
+        {
+            return 0;
+        }else
+        {
+            return $result[0]['total_fund'];
+        }
+    }
+
+
+
+    
 
 
 

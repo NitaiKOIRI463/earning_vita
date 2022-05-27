@@ -11,9 +11,6 @@ class Package extends REST_Controller
          $this->load->model('GenerateFund_model');
          $this->load->model('Package_model');
          $this->load->model('Member_model');
-         
-         
-     
    }
 
    public function BuyPackage_post()
@@ -199,62 +196,254 @@ class Package extends REST_Controller
         if($this->input->post('user_request_id',true)=='')
         {
             $this->response(['status'=>false,'data'=>[],'msg'=>'user_request_id required !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
-        }elseif($this->input->post('d_by',true)=='')
-        {
-            $this->response(['status'=>false,'data'=>[],'msg'=>'d_by required !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
         }else
         {
-            $result = $this->Package_model->getRequestPackageDetails_m($this->input->post('user_request_id',true));
-            if(empty($result))
+            $pkg_details = $this->Package_model->getRequestPackageDetails_m($this->input->post('user_request_id',true));
+            if(empty($pkg_details))
             {
-                $this->response(['status'=>false,'data'=>[],'msg'=>'invalid package !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+                $this->response(['status'=>false,'data'=>[],'msg'=>'Invalid package request !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
             }else
             {
-                $ActivationMainData = [];
-                $ActivationMainData['sponser_details'] = [];
-                $ActivationMainData['matching_details'] = [];
-                if($result[0]['current_status']=='requested')
+                // This is cuurent package request details
+                $sponser_id = $pkg_details[0]['sponsor_id'];
+                $member_id = $pkg_details[0]['member_id'];
+                $package_amount = $pkg_details[0]['package_amount'];
+                $current_status = $pkg_details[0]['current_status'];
+                $package_days = $pkg_details[0]['days'];
+                if($current_status=='requested')
                 {
-
-                    $resultData = $this->GenerateFund_model->getAvailableFunds_m();
-                    if($result[0]['package_amount']<=$resultData[0]['total_fund'])
+                    $pkg_sponserActivedetails = $this->Package_model->get_member_details_m($sponser_id);
+                    $sponserArray = [];
+                    if(isset($pkg_sponserActivedetails[0]['current_status']) && $pkg_sponserActivedetails[0]['current_status']=='active')
                     {
+                        $pkg_SponserDetails = $this->Package_model->getLetestPackageDetails_m($sponser_id);
+                        $sponsor_income_perc = $pkg_SponserDetails[0]['sponsor_income_perc'];
+                        $sponser_name = $pkg_SponserDetails[0]['name'];
+                        $sponserArray['sponser_status'] = "active";
+                        $sponserArray['pkg_amount'] = $package_amount;
+                        $sponserArray['sponser_name'] = $sponser_name;
+                        $sponserArray['sponser_member_id'] = $sponser_id;
+                        $sponserArray['sponser_perc'] = $sponsor_income_perc;
+                        $sponserArray['sponser_income_perc'] = $sponsor_income_perc;
+                        $sponserArray['total_commisson'] = ($package_amount/100)*$sponsor_income_perc;
 
-                       $sponser_idExist =  $this->Member_model->verifyRegisterMemberExist($result[0]['sponsor_id']);
-                       if($sponser_idExist>0)
-                       {
+                    }elseif(isset($pkg_sponserActivedetails[0]['current_status']))
+                    {
+                        $sponserArray['sponser_status'] = "inactive";
+                        $sponserArray['pkg_amount'] = $package_amount;
+                        $sponserArray['sponser_name'] = $pkg_sponserActivedetails[0]['name'];
+                        $sponserArray['sponser_member_id'] = $sponser_id;
+                        $sponserArray['sponser_income_perc'] = 0;
+                        $sponserArray['total_commisson'] = 0;
+                    } 
+                    
+                   $activate_date = date('Y-m-d H:i:s');
+                   $expiry_date = $this->get_expiry_date($activate_date,$package_days);
+                   $pkgArray = [];
+                   $pkgArray['package_id'] = $pkg_details[0]['package_id'];
+                   $pkgArray['roi_perc'] = $pkg_details[0]['roi_perc'];
+                   $pkgArray['reg_id'] = $pkg_details[0]['reg_id'];
+                   $pkgArray['roi_amount'] = $pkg_details[0]['roi_amount'];
+                   $pkgArray['package_amount'] = $package_amount;
+                   $pkgArray['member_id'] = $member_id;
+                   $pkgArray['name'] = $pkg_details[0]['name'];
+                   $pkgArray['activate_date'] = date('d-m-Y H:i:s',strtotime($activate_date));
+                   $pkgArray['expiry_date'] = date('d-m-Y H:i:s',strtotime($expiry_date));
+                   $pkgArray['roi_days'] = $pkg_details[0]['days'];
+                   $pkgArray['total_return'] = $pkg_details[0]['total_return'];
 
-                            $letestPackageDetails = $this->Package_model->getLetestPackageDetails_m($result[0]['sponsor_id']);
-                            if(!empty($letestPackageDetails))
-                            {
-                                //Sponser Income Area
-                                $ActivationMainData['sponser_details'] = $letestPackageDetails;
+                   $sevenLevelParents = $this->Package_model->get7Levelparents($member_id);
+                   $machingIncomeArray = [];
+                   if(!empty($sevenLevelParents))
+                   {
+                        foreach ($sevenLevelParents as $key => $value) {
 
-                            }
+                            $directSponserLeft = $this->Package_model->getTwoDirectRefral($value['parent_id'],'L');
+                            $directSponserRight = $this->Package_model->getTwoDirectRefral($value['parent_id'],'R');
 
-                            $ActivationMainData['matching_details'] = $this->get_levels_of_parents($result[0]['member_id'],7);
+                            $pkg_parentActivedetails = $this->Package_model->get_member_details_m($value['parent_id']);
 
-                            $this->response(['status'=>true,'data'=>$ActivationMainData,'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]); 
+                             $moreAmountPkgLeft = $this->verifyPackageMoreThan($directSponserLeft,$pkg_parentActivedetails[0]['package_amount']);
+                             $moreAmountPkgRight = $this->verifyPackageMoreThan($directSponserRight,$pkg_parentActivedetails[0]['package_amount']);
+                             $leftBusiness = $this->Package_model->getMemberBusiness($value['parent_id'],"L");
+                             $RightBusiness = $this->Package_model->getMemberBusiness($value['parent_id'],"L");
+
+                             
+                             if($value['side']=='L')
+                             {
+                                $leftBusiness = $leftBusiness+$package_amount;
+                             }elseif($value['side']=='R')
+                             {
+                                $RightBusiness = $RightBusiness+$package_amount;
+                             }
+                             $maching_business_amount = 0;
+                             if($leftBusiness<=$RightBusiness)
+                             {
+                                $maching_business_amount = $leftBusiness;
+                             }elseif($RightBusiness<=$leftBusiness)
+                             {
+                                $maching_business_amount = $RightBusiness;
+                             }
+                             if($maching_business_amount>0)
+                             {
+                                if($moreAmountPkgLeft>0 && $moreAmountPkgRight>0)
+                                {
+                                    
+                                    $machingIncomeArray[$key]['parent_id']  = $value['parent_id'];
+                                    $machingIncomeArray[$key]['parent_name']  = $value['name'];
+                                    $machingIncomeArray[$key]['matching_perc']  = $value['name'];
+                                    $machingIncomeArray[$key]['matching_amount']  = $maching_business_amount;
+
+                                    $machingIncomeArray[$key]['pkg_amount']  = $package_amount;
+                                    $machingIncomeArray[$key]['side']  = $value['side'];
+                                    $machingIncomeArray[$key]['matching_perc']  = $pkg_parentActivedetails[0]['matching_perc'];
+                                    $machingIncomeArray[$key]['parent_level']  = $value['m_level'];
+                                    $machingIncomeArray[$key]['commission']  = ($maching_business_amount/100)*$pkg_parentActivedetails[0]['matching_perc'];
+
+                                    $machingIncomeArray[$key]['maching_status']  = 'success';
+                                    $machingIncomeArray[$key]['remarks']  = 'NA';
+
+                                }else
+                                {
+                                    $machingIncomeArray[$key]['parent_id']  = $value['parent_id'];
+                                    $machingIncomeArray[$key]['parent_name']  = $value['name'];
+                                    $machingIncomeArray[$key]['matching_perc']  = $value['name'];
+                                    $machingIncomeArray[$key]['parent_level']  = $value['m_level'];
+                                    $machingIncomeArray[$key]['pkg_amount']  = $package_amount;
+                                    $machingIncomeArray[$key]['side']  = $value['side'];
+                                    $machingIncomeArray[$key]['matching_perc']  = $pkg_parentActivedetails[0]['matching_perc'];
+                                    $machingIncomeArray[$key]['matching_amount']  = $maching_business_amount;
+                                    $machingIncomeArray[$key]['commission']  = ($maching_business_amount/100)*$pkg_parentActivedetails[0]['matching_perc'];
+
+                                    $machingIncomeArray[$key]['maching_status']  = 'lapse';
+                                    $machingIncomeArray[$key]['remarks']  = 'Due To Two Direct Sponser Not Found';
+                                }
+
+                             }
                             
-                       }else
-                       {
-                            $this->response(['status'=>false,'data'=>[],'msg'=>'invalid sponser_id !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
-                       }
-
-                    }else
-                    {
-                        $this->response(['status'=>false,'data'=>[],'msg'=>'Insufficent Fund !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
-                    }
+                        }
+                   }
+                   
+                  
+                   $this->response(['status'=>true,'data'=>['sponser_income'=>$sponserArray,'matching_income'=>$machingIncomeArray,'roi'=>$pkgArray],'msg'=>'Success','response_code'=>REST_Controller::HTTP_OK]);
 
                 }else
                 {
-                    $this->response(['status'=>false,'data'=>[],'msg'=>'invalid request !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+                    $this->response(['status'=>false,'data'=>[],'msg'=>'package status not requested !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
                 }
-                $this->response(['status'=>true,'data'=>$result,'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]); 
             }
+
+            
             
         }
      
+   }
+
+
+
+   function update_activation_commison_post()
+   {
+        $availableFund = $this->Package_model->getFundAvailable();
+        $package_amount = $this->input->post('package_amount',true);
+        if($package_amount<=$availableFund)
+        {
+            $sponserParent = json_decode($_POST['sponserParent'],true);
+            $machingParent = json_decode($_POST['machingParent'],true);
+
+            if(isset($_POST['sponser']) && !empty($_POST['sponser']) && json_decode($_POST['sponser'],true)!=null)
+            {
+
+                $sponserData = json_decode($_POST['sponser'],true);
+                $sponserData = explode("|", $sponserData);
+
+                $spData['MemberId'] = $sponserData[0];
+                $spData['Effect_Member_Id'] = $sponserData[1];
+                $spData['Sponsor_income'] = $sponserData[2];
+                $spData['Sponsor_date'] = date('Y-m-d H:i:s');
+                $spData['Package_Amount'] = $sponserData[3];
+                $spData['sponser_perc'] = $sponserData[4];
+                if($sponserParent==$sponserData[0])
+                {
+                    $spData['laps_status'] = 1;
+                    $spData['laps_remarks'] = 'NA';
+                }else
+                {
+                    $spData['laps_status'] = 0;
+                    $spData['laps_remarks'] = 'Lapse By Admin';
+                }
+                $spData['status'] = 1;
+                $spData['c_by'] = $_POST['c_by'];
+                $spData['c_date'] = date('Y-m-d H:i:s');
+
+                $this->Package_model->insertSponserAdminIncome($spData);
+            }
+            if(isset($_POST['maching']) && !empty($_POST['maching']) && json_decode($_POST['maching'],true)!=NULL)
+            {
+                $machingData = json_decode($_POST['maching'],true);
+                foreach($machingData as $key=>$value)
+                {
+                    $value = explode("|", $value);
+                    $mcData['Member_id'] = $value[0];
+                    $mcData['Effect_By_Id'] = $value[7];
+                    $mcData['m_level'] = $value[1];
+                    $mcData['Effect_Amount'] = $value[4];
+                    $mcData['Matching_Amount'] = $value[2];
+                    $mcData['Effect_Side'] = $value[8];
+                    $mcData['Effect_date_time'] = date('Y-m-d H:i:s');
+                    if(in_array($value[0],$machingParent))
+                    {
+                       $mcData['laps_status'] = 1;
+                       $mcData['laps_remarks'] = 'NA'; 
+                    }else
+                    {
+                        $mcData['laps_status'] = 0;
+                        $mcData['laps_remarks'] = $value[6];
+                    }
+                    $mcData['status'] = 1;
+                    $mcData['c_by'] = $_POST['c_by'];
+                    $mcData['c_date'] = date('Y-m-d H:i:s');
+                    $this->Package_model->insertBinaryAdminIncome($mcData);
+                }   
+            }
+
+            $updateData = [];
+            $whereData['id'] = $this->input->post('reg_id',true);
+            $updateData['activated_by'] = $this->input->post('c_by',true);
+            $updateData['activation_date'] = date('Y-m-d H:i:s',strtotime($this->input->post('activate_date',true)));
+            $updateData['remaining_amount'] = $package_amount;
+            $updateData['current_status'] = 'active';
+            $updateData['expiry_date'] = date('Y-m-d H:i:s',strtotime($this->input->post('expiry_date',true)));
+            $this->Package_model->ActivateUserPackage($updateData,$whereData);
+
+            $walletHistoryData = [];
+            $walletHistoryData['fund'] = $package_amount;
+            $walletHistoryData['c_date'] = date('Y-m-d H:i:s');
+            $walletHistoryData['c_by'] = $this->input->post('c_by',true);
+            $walletHistoryData['status'] = 1;
+            $walletHistoryData['transaction_type'] = "OUT";
+            $walletHistoryData['ref_no'] = "PkgACTID_".$this->input->post('reg_id',true);
+            $this->Package_model->MainWalletHistory($walletHistoryData);
+            $availableFund = $availableFund - $package_amount;
+            $this->Package_model->updateFund(['total_fund'=>$availableFund,'d_by'=>$this->input->post('c_by',true),'d_date'=>date('Y-m-d H:i:s')],['main_type'=>'main']);
+            $this->response(['status'=>true,'data'=>[],'msg'=>'Successfully Activate !','response_code'=>REST_Controller::HTTP_OK]);
+        }else
+        {
+             $this->response(['status'=>false,'data'=>[],'msg'=>'Insufficent Fund !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+        }
+        
+   }
+
+   function verifyPackageMoreThan($dataArray,$parent_pkg_amt)
+   {
+        $status = 0;
+        foreach($dataArray as $key=>$value)
+        {
+            if($parent_pkg_amt<=$value['package_amount'])
+            {
+                $status++;
+            }
+        }
+        return $status;
    }
 
 
@@ -305,6 +494,29 @@ class Package extends REST_Controller
    }
    
 
+   function get_expiry_date($days,$addDays)
+   {
+        
+        $i = 1;
+        $current_date = $days;
+        $tmp_date = $days;
+        while(true)
+        {
+           $tmp_date = date('Y-m-d H:i:s',strtotime($tmp_date.' +1 day'));
+           if(!(date('D',strtotime($tmp_date))=='Sat' || date('D',strtotime($tmp_date)) =='Sun'))
+           {
+               $current_date = date('Y-m-d H:i:s',strtotime($current_date.' +1 day'));
+               $current_date = $tmp_date;
+               $i++;
+           }
+           if($i>=$addDays)
+           {
+                break;
+           }
+           
+        }
+        return $current_date;    
+   }
 
     
 
