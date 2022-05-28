@@ -178,5 +178,13 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
             }
         }
 
+
+        public function get_direct_members($sponser_id)
+        {
+            $qry = $this->db->query("select member_id,name,side,mobile_no,email_id,total_package,activation_status from tbl_registration_master where sponsor_id = ? and status = 1",[$sponser_id]);
+            return $result = $qry->result_array();
+            
+        }
+
     }
  ?>

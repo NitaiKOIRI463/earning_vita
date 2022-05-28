@@ -11,10 +11,15 @@
 
 		public function get_memberAvailable_fund_m($member_id)
 		{
-			// echo $member_id; die;
-			if($member_id !='')
-				$this->db->where('status',1);
-			return $this->db->select('id,member_id,total_fund')->from('tbl_user_wallets')->where(['member_id'=>$member_id])->get()->result_array();
+			
+			 $result = $this->db->select('id,member_id,total_fund')->from('tbl_user_wallets')->where(['member_id'=>$member_id])->get()->result_array();
+			 if(!empty($result))
+			 {
+			 	return $result[0]['total_fund'];
+			 }else
+			 {
+			 	return 0;
+			 }
 		}
 
 		public function get_member_request_fundList_m($member_id,$status)

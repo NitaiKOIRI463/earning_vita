@@ -489,8 +489,35 @@ class Package extends REST_Controller
    {
         $parent_id = $this->input->post('parent_id',true)!=''?$this->input->post('parent_id',true):"";
         $result = $this->Package_model->getChildGenology_m($parent_id);
-        $total_L_R = $this->Package_model->getTotalLeftRight($parent_id);
-        $this->response(['status'=>true,'data'=>['data'=>$result,'count_L_R'=>$total_L_R],'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]); 
+        $resdata = [];
+        $left_team = 0;
+        $right_team = 0;
+        $left_business = 0;
+        $right_business = 0;
+        if(!empty($result))
+        {
+            
+
+            foreach($result as $key=>$value)
+            {
+                $resdata[$key]['name'] = $value['name'];
+                $resdata[$key]['member_id'] = $value['member_id'];
+                $resdata[$key]['m_level'] = $value['m_level'];
+                $resdata[$key]['side'] = $value['side'];
+                $resdata[$key]['parent_id'] = $value['parent_id'];
+                $resdata[$key]['p_side'] = $value['p_side'];
+                $resdata[$key]['left_business'] = $this->Package_model->getMemberBusiness($value['member_id'],"L");
+                $resdata[$key]['right_business'] = $this->Package_model->getMemberBusiness($value['member_id'],"R");
+                $resdata[$key]['activation_status'] = $value['activation_status'];
+                $resdata[$key]['left_team'] = $this->Package_model->getTotalLeftRightGeno($value['member_id'],"L");
+                $resdata[$key]['right_team'] = $this->Package_model->getTotalLeftRightGeno($value['member_id'],"R");
+            }
+            $left_business = $this->Package_model->getMemberBusiness($parent_id,"L");
+            $right_business = $this->Package_model->getMemberBusiness($parent_id,"R");
+            $left_team = $this->Package_model->getTotalLeftRightGeno($parent_id,"L");
+            $right_team = $this->Package_model->getTotalLeftRightGeno($parent_id,"R");
+        }
+        $this->response(['status'=>true,'data'=>['data'=>$resdata,'left_team'=>$left_team,'right_team'=>$right_team,'left_business'=>$left_business,'right_business'=>$right_business],'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]); 
      
    }
    
@@ -517,6 +544,23 @@ class Package extends REST_Controller
            
         }
         return $current_date;    
+   }
+
+
+   public function get_team_business_list_post()
+   {
+        if($this->input->post('parent_id',true)=='')
+        {
+            $this->response(['status'=>false,'data'=>[],'msg'=>'parent Id Required !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+        }else
+        {
+            $result['left'] = $this->Package_model->getTotalTeamBusiness($this->input->post('parent_id',true),"L");
+            $result['right'] = $this->Package_model->getTotalTeamBusiness($this->input->post('parent_id',true),"R");
+            
+            $this->response(['status'=>true,'data'=>$result,'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]);
+        }
+
+       
    }
 
     

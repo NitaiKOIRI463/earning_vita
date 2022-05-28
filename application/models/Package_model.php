@@ -159,12 +159,11 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
 
       public function getChildGenology_m($parent_id)
       {
-            return $this->db->select("r.name,r.member_id,l.m_level,l.side,r.parent_id,r.side as p_side")->from('tbl_parent_level l')
+            return $this->db->select("r.name,r.member_id,l.m_level,l.side,r.parent_id,r.side as p_side,r.activation_status")->from('tbl_parent_level l')
             ->join('tbl_registration_master r','r.member_id=l.member_id','left')
             ->where(['l.status'=>1,'l.parent_id'=>$parent_id])->order_by('l.m_level','asc')->get()->result_array();    
       }
 
-<<<<<<< Updated upstream
     public function get_member_details_m($member_id)
       {
             return $this->db->select('u.name,u.member_id,p.current_status,p.matching_perc,p.package_amount')->from('tbl_users_package_details p')->join('tbl_registration_master u','u.member_id=p.member_id','left')->where(['p.member_id'=>$member_id,'p.status'=>1,'p.current_status' => 'active'])->order_by('p.activation_date','desc')->limit(1)->get()->result_array();
@@ -227,17 +226,33 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
         }
     }
 
-
-
-    
-
-
-=======
       public function getTotalLeftRight($parent_id)
       {
         return $this->db->select('count(member_id) as total,side')->from('tbl_parent_level')->where(['parent_id'=>$parent_id,'status'=>1])->group_by('side')->get()->result_array();
       }
->>>>>>> Stashed changes
+
+      public function getTotalLeftRightGeno($parent_id,$side)
+      {
+         $result = $this->db->select('count(member_id) as total')->from('tbl_parent_level')->where(['parent_id'=>$parent_id,'status'=>1,'side'=>$side])->get()->result_array();
+         if(empty($result))
+         {
+            return 0;
+         }else
+         {
+            return $result[0]['total'];
+         }
+      }
+
+
+
+      public function getTotalTeamBusiness($parent_id,$side)
+      {
+         return $result = $this->db->select('r.member_id,r.total_package,r.name,l.side,l.m_level,r.activation_status')
+         ->from('tbl_parent_level l')
+         ->join('tbl_registration_master r','r.member_id=l.member_id','left')->where(['l.parent_id'=>$parent_id,'l.status'=>1,'l.side'=>$side])->order_by('l.m_level','asc')->get()->result_array();
+         
+      }
+
 
 
    }

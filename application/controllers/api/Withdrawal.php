@@ -49,7 +49,7 @@
 	            $this->response(['status'=>false,'data'=>[],'msg'=>'c_by required !','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
 	        }else{
 	        	$checkFund = $this->Withdrawal_model->get_memberAvailable_fund_m($this->input->post('member_id',true));
-	        	$amount = $checkFund[0]['total_fund'];
+	        	$amount = $checkFund;
 	        	try {
 	        		if($this->input->post('fund',true) <= $amount)
 	        		{
