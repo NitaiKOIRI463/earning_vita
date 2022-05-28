@@ -8,6 +8,7 @@ class Daily_income extends REST_Controller
    {
        parent::__construct();
      $this->load->model('Daily_income_model');
+     $this->load->model('Package_model');
    }
    public function getIncome_post()
     { 
@@ -32,6 +33,8 @@ class Daily_income extends REST_Controller
             $result['total_matching'] = $this->Daily_income_model->member_total_matching($member_id);
             $result['total_withdrawal'] = $this->Daily_income_model->member_withdrawal($member_id);
             $result['member_details'] = $this->Daily_income_model->member_details($member_id);
+            $result['total_direct'] = $this->Daily_income_model->member_total_direct($member_id);
+            $result['packages'] = $this->Package_model->getLetestPackageDetails_m($member_id);
             $this->response(['status'=>true,'data'=>$result,'msg'=>'successfully','response_code' => REST_Controller::HTTP_OK]);
         }catch(Exception $e)
         {

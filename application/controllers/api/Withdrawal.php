@@ -112,12 +112,17 @@
 	        		try {
 		        		if($this->input->post('fund',true) <= $amount)
 		        		{
+		        			$req_fund = $this->input->post('fund',true);
+		        			$fee = $this->Withdrawal_model->get_witdwaral_fee_m();
+		        			$fee_amount = ($req_fund/100)*$fee;
 		        			$substract_amt = ($amount - $this->input->post('fund',true));
 
 		        			$this->Withdrawal_model->update_wallet($this->input->post('member_id',true),$substract_amt);
 
 		        			$array1 = [];
 		        			$array1['current_status'] = 'approved';
+		        			$array1['approve_fund'] = $req_fund-$fee_amount;
+		        			$array1['fee_amount'] = $fee_amount;
 		        			$array1['d_by'] = $this->input->post('d_by',true);
 		        			$array1['d_date'] = date("Y-m-d, H:i:s");
 		        			$this->Withdrawal_model->updateRequest($this->input->post('withdraw_id',true),$array1);
@@ -125,11 +130,24 @@
 		        			$array2 = [];
 		        			$array2['member_id'] = $this->input->post('member_id',true);
 		        			$array2['transaction_type'] = "OUT";
-		        			$array2['fund'] = $this->input->post('fund',true);
+		        			$array2['fund'] = $req_fund-$fee_amount;
 		        			$array2['reference_no'] = $this->input->post('withdraw_id',true);
-		        			$array2['transection_pin'] = $this->input->post('transaction_pin',true);
+		        			$array2['transaction_pin'] = $this->input->post('transaction_pin',true);
 		        			$array2['c_by'] = $this->input->post('c_by',true);
 		        			$array2['c_date'] = date("Y-m-d, H:i:s");
+		        			$array2['type_fee'] = 0;
+		        			$array2['status'] = 1;
+		        			$this->Withdrawal_model->insertFundLog($array2);
+
+		        			$array2 = [];
+		        			$array2['member_id'] = $this->input->post('member_id',true);
+		        			$array2['transaction_type'] = "OUT";
+		        			$array2['fund'] = $fee_amount;
+		        			$array2['reference_no'] = $this->input->post('withdraw_id',true);
+		        			$array2['transaction_pin'] = $this->input->post('transaction_pin',true);
+		        			$array2['c_by'] = $this->input->post('c_by',true);
+		        			$array2['c_date'] = date("Y-m-d, H:i:s");
+		        			$array2['type_fee'] = 1;
 		        			$array2['status'] = 1;
 		        			$this->Withdrawal_model->insertFundLog($array2);
 

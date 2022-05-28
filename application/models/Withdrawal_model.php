@@ -66,5 +66,19 @@
 		{
 			return $this->db->update('tbl_user_withdrawal_request',$rjctArray,['withdraw_id'=>$withdraw_id]);
 		}
+
+		public function get_witdwaral_fee_m()
+		{
+			
+			 $result = $this->db->select('value')->from('tbl_setup')->where(['key'=>'withdrawal_perc','status'=>1])->get()->result_array();
+			 if(!empty($result))
+			 {
+			 	return $result[0]['value'];
+			 }else
+			 {
+			 	return 0;
+			 }
+		}
+
 	}
 ?>
