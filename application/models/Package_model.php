@@ -68,6 +68,12 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
             
       }
 
+      public function getRejectPackage_m($member_id)
+      {
+            return $this->db->select('id,current_status,c_date,required_btc,payment_type')->from('tbl_users_package_details')->where(['member_id'=>$member_id,'status'=>1,'current_status'=>'reject'])->get()->result_array();
+            
+      }
+
 
       public function update_package_purchase_m($data,$where)
       {
@@ -77,7 +83,7 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
 
       public function getMyPackage_m($member_id)
       {
-            return $this->db->select('id,package_id,package_amount,total_return,days,sponsor_income_perc,matching_perc,capping,activation_date,expiry_date,activated_by,current_status,c_date,required_btc,payment_type,remaining_amount,release_amount')->from('tbl_users_package_details')->where(['member_id'=>$member_id,'status'=>1,'current_status!='=>'expired'])->get()->result_array();
+            return $this->db->select('id,package_id,package_amount,total_return,days,sponsor_income_perc,matching_perc,capping,activation_date,expiry_date,activated_by,current_status,c_date,required_btc,payment_type,remaining_amount,release_amount,remarks')->from('tbl_users_package_details')->where(['member_id'=>$member_id,'status'=>1,'current_status!='=>'expired'])->get()->result_array();
             
       }
 
@@ -88,7 +94,7 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
         if($current_status!="")
                 $this->db->where('current_status',$current_status);
         $base_url = base_url().'all-uploaded-img/screenshot/';
-            return $this->db->select("member_id,required_btc,id,package_id,package_amount,total_return,days,sponsor_income_perc,matching_perc,capping,activation_date,expiry_date,activated_by,current_status,c_date,required_btc,payment_type,transaction_no,CONCAT('$base_url',screenshot) as screenshot")->from('tbl_users_package_details')->where(['status'=>1,'current_status!='=>'expired'])->get()->result_array();
+            return $this->db->select("member_id,required_btc,id,package_id,package_amount,total_return,days,sponsor_income_perc,matching_perc,capping,activation_date,expiry_date,activated_by,current_status,c_date,required_btc,payment_type,transaction_no,CONCAT('$base_url',screenshot) as screenshot,remarks")->from('tbl_users_package_details')->where(['status'=>1,'current_status!='=>'expired'])->get()->result_array();
             
       }
 
@@ -250,6 +256,12 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
          return $result = $this->db->select('r.member_id,r.total_package,r.name,l.side,l.m_level,r.activation_status')
          ->from('tbl_parent_level l')
          ->join('tbl_registration_master r','r.member_id=l.member_id','left')->where(['l.parent_id'=>$parent_id,'l.status'=>1,'l.side'=>$side])->order_by('l.m_level','asc')->get()->result_array();
+         
+      }
+
+      public function reject_packages($req_id,$c_by,$reject_remarks)
+      {
+         return $this->db->update('tbl_users_package_details',['current_status'=>'reject','d_by'=>$c_by,'d_date'=>date('Y-m-d H:i:s'),'remarks'=>$reject_remarks],['id'=>$req_id,'status'=>1]);
          
       }
 

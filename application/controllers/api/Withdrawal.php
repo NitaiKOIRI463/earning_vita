@@ -51,23 +51,7 @@
 	            $this->response(['status'=>false,'data'=>[],'msg'=>'c_by required !','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
 	        }else{
 	        	$checkFund = $this->Withdrawal_model->get_memberAvailable_fund_m($this->input->post('member_id',true));
-<<<<<<< Updated upstream
 	        	$amount = $checkFund;
-	        	try {
-	        		if($this->input->post('fund',true) <= $amount)
-	        		{
-	        			$dataArray = [];
-	        			$dataArray['member_id'] = $this->input->post('member_id',true);
-	        			$dataArray['fund'] = $this->input->post('fund',true);
-	        			$dataArray['current_status'] = 'requested';
-	        			$dataArray['c_by'] = 1;
-	        			$dataArray['c_date'] = date("Y-m-d, H:i:s");
-	        			$dataArray['status'] = 1;
-	        			$this->Withdrawal_model->insertRequest($dataArray);
-=======
-	        	$amount = $checkFund[0]['total_fund'];
->>>>>>> Stashed changes
-
 	        	$verifyPin = $this->Withdrawal_model->verify_transction_pin_m($this->input->post('member_id',true));
 
 	        	if($verifyPin[0]['transaction_pin'] == $this->input->post('transaction_pin',true))
@@ -120,7 +104,7 @@
 	        }
 	        else{
 	        	$checkFund = $this->Withdrawal_model->get_memberAvailable_fund_m($this->input->post('member_id',true));
-	        	$amount = $checkFund[0]['total_fund'];
+	        	$amount = $checkFund;
 	        	
 	        	$verifyPin = $this->Withdrawal_model->verify_transction_pin_m($this->input->post('member_id',true));
 	        	if($verifyPin[0]['transaction_pin'] == $this->input->post('transaction_pin',true))

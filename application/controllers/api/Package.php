@@ -105,6 +105,19 @@ class Package extends REST_Controller
      
    }
 
+   public function get_reject_packages_post()
+   {
+        if($this->input->post('member_id',true)=='')
+        {
+            $this->response(['status'=>false,'data'=>[],'msg'=>'member_id required !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+        }else
+        {
+            $result = $this->Package_model->getRejectPackage_m($this->input->post('member_id',true));
+            $this->response(['status'=>true,'data'=>$result,'msg'=>'Successfully Requested !','response_code'=>REST_Controller::HTTP_OK]); 
+        }
+     
+   }
+
 
    public function expiry_package_request_post()
    {
@@ -255,9 +268,11 @@ class Package extends REST_Controller
                    $sevenLevelParents = $this->Package_model->get7Levelparents($member_id);
                    $machingIncomeArray = [];
                    if(!empty($sevenLevelParents))
-                   {
+                   {    
+                        $c =0;
                         foreach ($sevenLevelParents as $key => $value) {
 
+                            
                             $directSponserLeft = $this->Package_model->getTwoDirectRefral($value['parent_id'],'L');
                             $directSponserRight = $this->Package_model->getTwoDirectRefral($value['parent_id'],'R');
 
@@ -266,7 +281,7 @@ class Package extends REST_Controller
                              $moreAmountPkgLeft = $this->verifyPackageMoreThan($directSponserLeft,$pkg_parentActivedetails[0]['package_amount']);
                              $moreAmountPkgRight = $this->verifyPackageMoreThan($directSponserRight,$pkg_parentActivedetails[0]['package_amount']);
                              $leftBusiness = $this->Package_model->getMemberBusiness($value['parent_id'],"L");
-                             $RightBusiness = $this->Package_model->getMemberBusiness($value['parent_id'],"L");
+                             $RightBusiness = $this->Package_model->getMemberBusiness($value['parent_id'],"R");
 
                              
                              if($value['side']=='L')
@@ -276,6 +291,8 @@ class Package extends REST_Controller
                              {
                                 $RightBusiness = $RightBusiness+$package_amount;
                              }
+                             // echo $leftBusiness.'\n';
+                             // echo $RightBusiness.'\n';
                              $maching_business_amount = 0;
                              if($leftBusiness<=$RightBusiness)
                              {
@@ -289,34 +306,36 @@ class Package extends REST_Controller
                                 if($moreAmountPkgLeft>0 && $moreAmountPkgRight>0)
                                 {
                                     
-                                    $machingIncomeArray[$key]['parent_id']  = $value['parent_id'];
-                                    $machingIncomeArray[$key]['parent_name']  = $value['name'];
-                                    $machingIncomeArray[$key]['matching_perc']  = $value['name'];
-                                    $machingIncomeArray[$key]['matching_amount']  = $maching_business_amount;
+                                    $machingIncomeArray[$c]['parent_id']  = $value['parent_id'];
+                                    $machingIncomeArray[$c]['parent_name']  = $value['name'];
+                                    $machingIncomeArray[$c]['matching_perc']  = $value['name'];
+                                    $machingIncomeArray[$c]['matching_amount']  = $maching_business_amount;
 
-                                    $machingIncomeArray[$key]['pkg_amount']  = $package_amount;
-                                    $machingIncomeArray[$key]['side']  = $value['side'];
-                                    $machingIncomeArray[$key]['matching_perc']  = $pkg_parentActivedetails[0]['matching_perc'];
-                                    $machingIncomeArray[$key]['parent_level']  = $value['m_level'];
-                                    $machingIncomeArray[$key]['commission']  = ($maching_business_amount/100)*$pkg_parentActivedetails[0]['matching_perc'];
+                                    $machingIncomeArray[$c]['pkg_amount']  = $package_amount;
+                                    $machingIncomeArray[$c]['side']  = $value['side'];
+                                    $machingIncomeArray[$c]['matching_perc']  = $pkg_parentActivedetails[0]['matching_perc'];
+                                    $machingIncomeArray[$c]['parent_level']  = $value['m_level'];
+                                    $machingIncomeArray[$c]['commission']  = ($maching_business_amount/100)*$pkg_parentActivedetails[0]['matching_perc'];
 
-                                    $machingIncomeArray[$key]['maching_status']  = 'success';
-                                    $machingIncomeArray[$key]['remarks']  = 'NA';
+                                    $machingIncomeArray[$c]['maching_status']  = 'success';
+                                    $machingIncomeArray[$c]['remarks']  = 'NA';
+                                    $c++;
 
                                 }else
                                 {
-                                    $machingIncomeArray[$key]['parent_id']  = $value['parent_id'];
-                                    $machingIncomeArray[$key]['parent_name']  = $value['name'];
-                                    $machingIncomeArray[$key]['matching_perc']  = $value['name'];
-                                    $machingIncomeArray[$key]['parent_level']  = $value['m_level'];
-                                    $machingIncomeArray[$key]['pkg_amount']  = $package_amount;
-                                    $machingIncomeArray[$key]['side']  = $value['side'];
-                                    $machingIncomeArray[$key]['matching_perc']  = $pkg_parentActivedetails[0]['matching_perc'];
-                                    $machingIncomeArray[$key]['matching_amount']  = $maching_business_amount;
-                                    $machingIncomeArray[$key]['commission']  = ($maching_business_amount/100)*$pkg_parentActivedetails[0]['matching_perc'];
+                                    $machingIncomeArray[$c]['parent_id']  = $value['parent_id'];
+                                    $machingIncomeArray[$c]['parent_name']  = $value['name'];
+                                    $machingIncomeArray[$c]['matching_perc']  = $value['name'];
+                                    $machingIncomeArray[$c]['parent_level']  = $value['m_level'];
+                                    $machingIncomeArray[$c]['pkg_amount']  = $package_amount;
+                                    $machingIncomeArray[$c]['side']  = $value['side'];
+                                    $machingIncomeArray[$c]['matching_perc']  = $pkg_parentActivedetails[0]['matching_perc'];
+                                    $machingIncomeArray[$c]['matching_amount']  = $maching_business_amount;
+                                    $machingIncomeArray[$c]['commission']  = ($maching_business_amount/100)*$pkg_parentActivedetails[0]['matching_perc'];
 
-                                    $machingIncomeArray[$key]['maching_status']  = 'lapse';
-                                    $machingIncomeArray[$key]['remarks']  = 'Due To Two Direct Sponser Not Found';
+                                    $machingIncomeArray[$c]['maching_status']  = 'lapse';
+                                    $machingIncomeArray[$c]['remarks']  = 'Due To Two Direct Sponser Not Found';
+                                    $c++;
                                 }
 
                              }
@@ -425,6 +444,48 @@ class Package extends REST_Controller
             $this->Package_model->MainWalletHistory($walletHistoryData);
             $availableFund = $availableFund - $package_amount;
             $this->Package_model->updateFund(['total_fund'=>$availableFund,'d_by'=>$this->input->post('c_by',true),'d_date'=>date('Y-m-d H:i:s')],['main_type'=>'main']);
+
+
+            $content = '';
+            $mail = new PHPMailer();
+            $mail->IsSMTP();
+            $mail->Mailer = "smtp";
+            $mail->SMTPDebug = 0;
+            $mail->SMTPAuth = true;
+            $mail->SMTPSecure = "tls";
+            $mail->Port = 587;
+            $mail->Host = "smtpout.secureserver.net";
+            $mail->Username = "nonreply@earningvista.com";
+            $mail->Password = "n@123456!";
+            $mail->IsHTML(true);
+            $mail->AddAddress($dataArray['email_id'],$dataArray['name']);
+            // $mail->AddAddress("kumarsamir812@gmail.com","Samir Singh");
+            $mail->SetFrom("info@cryptotrado.com", "crypto trado");
+            $mail->Subject = "ACTIVATION";
+              $content  = '<table style="width:100%;background: #462b13;font-family: system-ui;">';
+              $content .= '<div style="text-align:center;margin-top:100px;"><img style="width:200px;height:50px;" src="https://cryptotrado.com/client/images/crypto-trade-portal-logo-01.png"></div>';
+              $content  .= '<div style="width:400px; background: white;color:black; margin:10px auto;padding: 20px;font-size: 13px;margin-bottom:100px;border-radius: 6px;">';
+              $content  .= '<p style="font-size: 12px;"><strong>Dear </strong><br> &nbsp;  '.$dataArray['name'].',</p>';
+              $content  .= '<p>Greetings from earningvista.com!</p>';
+
+              $content  .= '<p>Congratulations! You have made a great choice by getting this awesome Package with us.</p>';
+              $content .='<p>Please find the details below:</p>
+                            <p><strong>Package name : </strong> '.$dataArray['member_id'].'</p>
+                            <p><strong>Package Amount   : </strong> '.$pass.'</p>';
+
+              $content  .= '<p style="font-size: 10px;margin-bottom:50px;">This is an auto generated mail, there is no need to reply.</p>';
+              $content  .= '<strong>';
+              $content  .= '<address style="line-height: 10px;font-size: 12px;">';
+              $content  .= '<p><strong>Warm Regards,</strong></p>';
+              $content  .= '<p>EARN VISTA</p>';
+              $content  .= '<p>www.earningvista.com</p>';
+              $content  .= '<p>For more info - info@earningvista.com</p>';
+              $content  .= '</address>';
+              $content  .= '</strong>';
+              $content  .= '</div>';
+              $content  .= '</table>';
+            $mail->MsgHTML($content);
+            $mail->Send();
             $this->response(['status'=>true,'data'=>[],'msg'=>'Successfully Activate !','response_code'=>REST_Controller::HTTP_OK]);
         }else
         {
@@ -558,6 +619,27 @@ class Package extends REST_Controller
             $result['right'] = $this->Package_model->getTotalTeamBusiness($this->input->post('parent_id',true),"R");
             
             $this->response(['status'=>true,'data'=>$result,'msg'=>'Successfully Fetched !','response_code'=>REST_Controller::HTTP_OK]);
+        }
+
+       
+   }
+
+
+  public function reject_package_request_post()
+   {
+        if($this->input->post('c_by',true)=='')
+        {
+            $this->response(['status'=>false,'data'=>[],'msg'=>'c_by Required !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+        }if($this->input->post('req_id',true)=='')
+        {
+            $this->response(['status'=>false,'data'=>[],'msg'=>'Req Id Required !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+        }if($this->input->post('reject_remarks',true)=='')
+        {
+            $this->response(['status'=>false,'data'=>[],'msg'=>'reject_remarks Required !','response_code'=>REST_Controller::HTTP_BAD_REQUEST]);
+        }else
+        {
+            $this->Package_model->reject_packages($this->input->post('req_id',true),$this->input->post('c_by',true),$this->input->post('reject_remarks',true));
+            $this->response(['status'=>true,'data'=>[],'msg'=>'Successfully Rejected !','response_code'=>REST_Controller::HTTP_OK]);
         }
 
        
