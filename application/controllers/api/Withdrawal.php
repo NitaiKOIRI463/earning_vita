@@ -40,8 +40,10 @@
 			if($this->input->post('member_id',true)=='')
 	        {
 	            $this->response(['status'=>false,'data'=>[],'msg'=>'member id required !','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
-	        }
-			elseif($this->input->post('fund',true)=='')
+	        }elseif($this->input->post('transaction_pin',true)=='')
+	        {
+	            $this->response(['status'=>false,'data'=>[],'msg'=>'transaction pin required !','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
+	        }elseif($this->input->post('fund',true)=='')
 	        {
 	            $this->response(['status'=>false,'data'=>[],'msg'=>'fund required !','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
 	        }elseif($this->input->post('c_by',true)=='')
@@ -49,6 +51,7 @@
 	            $this->response(['status'=>false,'data'=>[],'msg'=>'c_by required !','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
 	        }else{
 	        	$checkFund = $this->Withdrawal_model->get_memberAvailable_fund_m($this->input->post('member_id',true));
+<<<<<<< Updated upstream
 	        	$amount = $checkFund;
 	        	try {
 	        		if($this->input->post('fund',true) <= $amount)
@@ -61,17 +64,39 @@
 	        			$dataArray['c_date'] = date("Y-m-d, H:i:s");
 	        			$dataArray['status'] = 1;
 	        			$this->Withdrawal_model->insertRequest($dataArray);
+=======
+	        	$amount = $checkFund[0]['total_fund'];
+>>>>>>> Stashed changes
 
-	        			$this->response(['status'=>true,'data'=>[],'msg'=>'Successfully Requested','response_code' => REST_Controller::HTTP_OK]);
-	        			// print_r($dataArray); die;
-	        		}
-	        		else{
-	        			$this->response(['status'=>false,'data'=>[],'msg'=>'Amount is greater than available balance!','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
-	        		}
-	        	} catch (Exception $e) {
-	        		$this->response(['status'=>false,'data'=>[],'msg'=>'Something went wrong!','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
+	        	$verifyPin = $this->Withdrawal_model->verify_transction_pin_m($this->input->post('member_id',true));
+
+	        	if($verifyPin[0]['transaction_pin'] == $this->input->post('transaction_pin',true))
+	        	{
+	        		try {
+		        		if($this->input->post('fund',true) <= $amount)
+		        		{
+		        			$dataArray = [];
+		        			$dataArray['member_id'] = $this->input->post('member_id',true);
+		        			$dataArray['fund'] = $this->input->post('fund',true);
+		        			$dataArray['transection_pin'] = $this->input->post('transaction_pin',true);
+		        			$dataArray['current_status'] = 'requested';
+		        			$dataArray['c_by'] = $this->input->post('c_by',true);
+		        			$dataArray['c_date'] = date("Y-m-d, H:i:s");
+		        			$dataArray['status'] = 1;
+		        			$this->Withdrawal_model->insertRequest($dataArray);
+
+		        			$this->response(['status'=>true,'data'=>[],'msg'=>'Successfully Requested','response_code' => REST_Controller::HTTP_OK]);
+		        			// print_r($dataArray); die;
+		        		}
+		        		else{
+		        			$this->response(['status'=>false,'data'=>[],'msg'=>'Amount is greater than available balance!','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
+		        		}
+		        	} catch (Exception $e) {
+		        		$this->response(['status'=>false,'data'=>[],'msg'=>'Something went wrong!','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
+		        	}
+	        	}else{
+	        		$this->response(['status'=>false,'data'=>[],'msg'=>'Transetion pin not matched !!','response_code' => REST_Controller::HTTP_BAD_REQUEST]);	
 	        	}
-	        	// print_r($amount); die;
 	        }
 		}
 
@@ -80,10 +105,12 @@
 			if($this->input->post('member_id',true)=='')
 	        {
 	            $this->response(['status'=>false,'data'=>[],'msg'=>'member id required !','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
-	        }
-			elseif($this->input->post('withdraw_id',true)=='')
+	        }elseif($this->input->post('withdraw_id',true)=='')
 	        {
 	            $this->response(['status'=>false,'data'=>[],'msg'=>'withdraw id required !','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
+	        }elseif($this->input->post('transaction_pin',true)=='')
+	        {
+	            $this->response(['status'=>false,'data'=>[],'msg'=>'transaction pin required !','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
 	        }elseif($this->input->post('fund',true)=='')
 	        {
 	            $this->response(['status'=>false,'data'=>[],'msg'=>'fund required !','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
@@ -93,38 +120,45 @@
 	        }
 	        else{
 	        	$checkFund = $this->Withdrawal_model->get_memberAvailable_fund_m($this->input->post('member_id',true));
-	        	// print_r($checkFund); die;
 	        	$amount = $checkFund[0]['total_fund'];
-	        	try {
-	        		if($this->input->post('fund',true) <= $amount)
-	        		{
-	        			$substract_amt = ($amount - $this->input->post('fund',true));
+	        	
+	        	$verifyPin = $this->Withdrawal_model->verify_transction_pin_m($this->input->post('member_id',true));
+	        	if($verifyPin[0]['transaction_pin'] == $this->input->post('transaction_pin',true))
+	        	{
+	        		try {
+		        		if($this->input->post('fund',true) <= $amount)
+		        		{
+		        			$substract_amt = ($amount - $this->input->post('fund',true));
 
-	        			$this->Withdrawal_model->update_wallet($this->input->post('member_id',true),$substract_amt);
+		        			$this->Withdrawal_model->update_wallet($this->input->post('member_id',true),$substract_amt);
 
-	        			$array1 = [];
-	        			$array1['current_status'] = 'approved';
-	        			$array1['d_by'] = $this->input->post('d_by',true);
-	        			$array1['d_date'] = date("Y-m-d, H:i:s");
-	        			$this->Withdrawal_model->updateRequest($this->input->post('withdraw_id',true),$array1);
+		        			$array1 = [];
+		        			$array1['current_status'] = 'approved';
+		        			$array1['d_by'] = $this->input->post('d_by',true);
+		        			$array1['d_date'] = date("Y-m-d, H:i:s");
+		        			$this->Withdrawal_model->updateRequest($this->input->post('withdraw_id',true),$array1);
 
-	        			$array2 = [];
-	        			$array2['member_id'] = $this->input->post('member_id',true);
-	        			$array2['transaction_type'] = "OUT";
-	        			$array2['fund'] = $this->input->post('fund',true);
-	        			$array2['reference_no'] = $this->input->post('withdraw_id',true);
-	        			$array2['c_by'] = $this->input->post('c_by',true);
-	        			$array2['c_date'] = date("Y-m-d, H:i:s");
-	        			$array2['status'] = 1;
-	        			$this->Withdrawal_model->insertFundLog($array2);
+		        			$array2 = [];
+		        			$array2['member_id'] = $this->input->post('member_id',true);
+		        			$array2['transaction_type'] = "OUT";
+		        			$array2['fund'] = $this->input->post('fund',true);
+		        			$array2['reference_no'] = $this->input->post('withdraw_id',true);
+		        			$array2['transection_pin'] = $this->input->post('transaction_pin',true);
+		        			$array2['c_by'] = $this->input->post('c_by',true);
+		        			$array2['c_date'] = date("Y-m-d, H:i:s");
+		        			$array2['status'] = 1;
+		        			$this->Withdrawal_model->insertFundLog($array2);
 
-	        			$this->response(['status'=>true,'data'=>[],'msg'=>'Successfully Approved','response_code' => REST_Controller::HTTP_OK]);
-	        		}
-	        		else{
-	        			$this->response(['status'=>false,'data'=>[],'msg'=>'Amount is greater than available balance!','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
-	        		}
-	        	} catch (Exception $e) {
-	        		$this->response(['status'=>false,'data'=>[],'msg'=>'Something went wrong!','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
+		        			$this->response(['status'=>true,'data'=>[],'msg'=>'Successfully Approved','response_code' => REST_Controller::HTTP_OK]);
+		        		}
+		        		else{
+		        			$this->response(['status'=>false,'data'=>[],'msg'=>'Amount is greater than available balance!','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
+		        		}
+		        	} catch (Exception $e) {
+		        		$this->response(['status'=>false,'data'=>[],'msg'=>'Something went wrong!','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
+		        	}
+	        	}else{
+	        		$this->response(['status'=>false,'data'=>[],'msg'=>'Transetion pin not matched !!','response_code' => REST_Controller::HTTP_BAD_REQUEST]);
 	        	}
 	        }
 		}

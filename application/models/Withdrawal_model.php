@@ -22,6 +22,13 @@
 			 }
 		}
 
+		public function verify_transction_pin_m($member_id)
+		{
+			if($member_id !='')
+				$this->db->where('member_id',$member_id);
+			return $this->db->select('transaction_pin')->from('tbl_registration_master')->where('status',1)->get()->result_array();
+		}
+
 		public function get_member_request_fundList_m($member_id,$status)
 		{
 			if($member_id !='')
